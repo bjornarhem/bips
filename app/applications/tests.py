@@ -78,6 +78,63 @@ class BasicBipsTest(TestCase):
         self.assertEqual(get_applications(), {})
 
 
+class BipsCreateTest(TestCase):
+    def setUp(self):
+        # Insert test stuff in the test database
+        self.interviewer1 = UserFactory()
+        self.interviewer2 = UserFactory()
+
+        self.job1 = JobFactory()
+        self.job1.possible_interviewers_1.add(self.interviewer1, self.interviewer2)
+        self.applicant1 = ApplicantFactory()
+        self.application1 = ApplicationFactory(applicant=self.applicant1, job=self.job1)
+
+        self.job2 = JobFactory()
+        self.job2.possible_interviewers_2.add(self.interviewer1, self.interviewer2)
+        self.applicant2 = ApplicantFactory()
+        self.application2 = ApplicationFactory(applicant=self.applicant2, job=self.job2)
+
+        self.job3 = JobFactory()
+        self.job3.possible_interviewers_1.add(self.interviewer1, self.interviewer2)
+        self.applicant3 = ApplicantFactory()
+        self.application3 = ApplicationFactory(applicant=self.applicant3, job=self.job1)
+        self.application4 = ApplicationFactory(applicant=self.applicant3, job=self.job2)
+        self.application5 = ApplicationFactory(applicant=self.applicant3, job=self.job3)
+
+        self.room1 = RoomFactory()
+        self.interview_slot1 = InterviewSlotFactory(room=self.room1)
+
+        self.scheduler = Scheduler()
+
+    def test_create_interview(self):
+        created = self.scheduler.create_interview(self.applicant1)
+        self.assertTrue(created)
+        interview_list = [Interview(self.applicant1, {self.interviewer1, self.interviewer2},
+            self.interview_slot1)]
+        self.assertEqual(self.scheduler.interview_list, interview_list)
+
+    def test_create_interview_priority_1_success(self):
+        created = self.scheduler.create_interview(self.applicant1, priority_level=1)
+        self.assertTrue(created)
+        interview_list = [Interview(self.applicant1, {self.interviewer2, self.interviewer1},
+            self.interview_slot1)]
+        self.assertEqual(self.scheduler.interview_list, interview_list)
+
+    def test_create_interview_priority_1_fail(self):
+        self.scheduler = Scheduler()
+        created = self.scheduler.create_interview(self.applicant2, priority_level=1)
+        self.assertFalse(created)
+        self.assertEqual(self.scheduler.interview_list, [])
+
+    def test_create_interview_three_jobs_two_interviewers(self):
+        self.scheduler = Scheduler()
+        created = self.scheduler.create_interview(self.applicant3)
+        self.assertTrue(created)
+        interview_list = [Interview(self.applicant3, {self.interviewer1, self.interviewer2},
+            self.interview_slot1)]
+        self.assertEqual(self.scheduler.interview_list, interview_list)
+
+
 class BipsReschedulingTest(TestCase):
     def setUp(self):
         # Insert test stuff in the test database
@@ -205,6 +262,16 @@ class BipsInterviewListValidationTest(TestCase):
         with self.assertRaises(AssertionError):
             assert_interview_list_is_valid(interview_list)
 
+    def test_assert_sufficient_breaks_for_interviewers(self):
+        # This test assumes MAX_CONTINUOUS_WORK is 4 hours
+        self.interview_slot2 = InterviewSlotFactory(start_time=datetime(2020,7,12,10,30),
+            end_time=datetime(2020,7,12,14,15), room=self.room1)
+        interviewers = {self.interviewer1, self.interviewer2}
+        interview_list = [Interview(self.applicant1, interviewers, self.interview_slot1),
+            Interview(self.applicant2, interviewers, self.interview_slot2)]
+        with self.assertRaises(AssertionError):
+            assert_interview_list_is_valid(interview_list)
+
     def test_assert_at_most_one_interview_per_applicant(self):
         self.interview_slot2 = InterviewSlotFactory(start_time=datetime(2020,7,12,10,30),
             end_time=datetime(2020,7,12,11,0), room=self.room1)
@@ -294,6 +361,15 @@ class BipsSimpleSchedulingScenariosTest(TestCase):
         scheduler.schedule_interviews()
         self.assertEqual(len(scheduler.interview_list), 1)
 
+    def test_insufficient_breaks(self):
+        # This test assumes MAX_CONTINUOUS_WORK is 4 hours
+        self.application2 = ApplicationFactory(applicant=self.applicant2, job=self.job1)
+        self.interview_slot2 = InterviewSlotFactory(start_time=datetime(2020,7,12,10,30),
+            end_time=datetime(2020,7,12,14,15), room=self.room1)
+        scheduler = Scheduler()
+        scheduler.schedule_interviews()
+        self.assertEqual(len(scheduler.interview_list), 1)
+
     def test_three_jobs(self):
         self.interviewer3 = UserFactory()
         self.interviewer4 = UserFactory()
@@ -309,3 +385,37 @@ class BipsSimpleSchedulingScenariosTest(TestCase):
         interview_list = [Interview(self.applicant1, interviewers, self.interview_slot1)]
         self.assertEqual(scheduler.interview_list, interview_list)
 
+
+class BipsSufficientBreaksTest(TestCase):
+    def setUp(self):
+        self.interviewer1 = UserFactory()
+        self.interviewer2 = UserFactory()
+        self.interviewer3 = UserFactory()
+        self.job1 = JobFactory()
+        self.job1.possible_interviewers_1.add(self.interviewer1)
+        self.job1.possible_interviewers_2.add(self.interviewer2)
+        self.job1.possible_interviewers_2.add(self.interviewer3)
+        self.applicant1 = ApplicantFactory()
+        self.applicant2 = ApplicantFactory()
+        self.applicant3 = ApplicantFactory()
+        self.application1 = ApplicationFactory(applicant=self.applicant1, job=self.job1)
+        self.application2 = ApplicationFactory(applicant=self.applicant2, job=self.job1)
+        self.application3 = ApplicationFactory(applicant=self.applicant3, job=self.job1)
+        self.room1 = RoomFactory()
+        self.interview_slot1 = InterviewSlotFactory(start_time=datetime(2021,11,25,10,0),
+            end_time=datetime(2021,11,25,12,0), room=self.room1)
+        self.interview_slot2 = InterviewSlotFactory(start_time=datetime(2021,11,25,12,0),
+            end_time=datetime(2021,11,25,14,0), room=self.room1)
+        self.interview_slot3 = InterviewSlotFactory(start_time=datetime(2021,11,25,14,0),
+            end_time=datetime(2021,11,25,16,0), room=self.room1)
+        self.busy_time1 = BusyTimeFactory(interviewer=self.interviewer1,
+            begin=datetime(2021,11,25,12), end=datetime(2021,11,25,14))
+        self.busy_time2 = BusyTimeFactory(interviewer=self.interviewer3,
+            begin=datetime(2021,11,25,10), end=datetime(2021,11,25,12))
+        self.busy_time3 = BusyTimeFactory(interviewer=self.interviewer3,
+            begin=datetime(2021,11,25,14), end=datetime(2021,11,25,16))
+
+    def test_sufficient_breaks(self):
+        scheduler = Scheduler()
+        scheduler.schedule_interviews()
+        self.assertEqual(len(scheduler.interview_list), 2)

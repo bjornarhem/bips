@@ -14,10 +14,8 @@ class Command(management.BaseCommand):
     def handle(self, *args, **options):
         # Schedule interviews
         scheduler = Scheduler()
-        scheduler.schedule_interviews()
+        scheduler.schedule_interviews(silent=False)
 
-        # Save scheduled interviews to database
-        scheduler.save_scheduled_interviews()
         print("Scheduled", len(scheduler.interview_list), "interviews.")
 
         print(len(scheduler.applied_jobs) - len(scheduler.unallocated_applicants), "out of",
@@ -42,3 +40,11 @@ class Command(management.BaseCommand):
             if num_interviews[interviewer] > 10:
                 print(interviewer.first_name, interviewer.last_name, ":", num_interviews[interviewer])
 
+        save_interviews = input("Save interviews to database? (y/n)")
+        if save_interviews != "y":
+            print("Didn't save interviews")
+            return
+
+        # Save scheduled interviews to database
+        scheduler.save_scheduled_interviews()
+        print("Saved interviews.")
