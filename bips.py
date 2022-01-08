@@ -1,10 +1,10 @@
 # BIPS: Scheduler class for automatically scheduling interviews
-# See management/commands/schedule_interviews.py for use.
+# See schedule_interviews.py for use.
 
 import random
 import datetime
 
-from uno.app.applications.models import Application, InterviewSlot, BusyTime
+from models import Application, InterviewSlot, BusyTime
 
 TRAVEL_TIME = datetime.timedelta(minutes=30) # represents travel time between rooms
 
@@ -36,7 +36,7 @@ class Interview:
         print("Room: ", self.interview_slot.room)
 
 class Scheduler:
-    def __init__(self, seed=0):
+    def __init__(self, input_filename, seed=0):
         assert_one_interview_slot_per_room_per_time()
         self.applicant_busy_times, self.interviewer_busy_time_space = get_busy_times()
         self.available_interview_slots = set(
@@ -203,7 +203,7 @@ class Scheduler:
         # Just to be sure, assert that the produced interview list is valid
         assert_interview_list_is_valid(self.interview_list)
 
-    def save_scheduled_interviews(self):
+    def save_scheduled_interviews(self, output_filename):
         for interview in self.interview_list:
             for interviewer in interview.interviewers:
                 interview.interview_slot.interviewers.add(interviewer)
