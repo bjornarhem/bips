@@ -1,10 +1,10 @@
 # BIPS: Scheduler class for automatically scheduling interviews
-# See management/commands/schedule_interviews.py for use.
+# See schedule_interviews.py for use.
 
 import random
 import datetime
 
-from uno.app.applications.models import Application, InterviewSlot, BusyTime
+from .models import Application, InterviewSlot, BusyTime
 
 TRAVEL_TIME = datetime.timedelta(minutes=30) # represents travel time between rooms
 
@@ -210,9 +210,7 @@ class Scheduler:
             for application in self.applications[interview.applicant]:
                 application.interview_slot = interview.interview_slot
                 application.save()
-            # (set(), set()) is to create interview mails to be sent later
-            # Must save applications before interview_slots for mails to works!
-            interview.interview_slot.save(set(), set())
+            interview.interview_slot.save()
 
 
 def get_busy_times():
@@ -235,8 +233,8 @@ def get_busy_times():
 
 def get_applications():
     applied_jobs = {}
-    applications_to_allocate = Application.objects.filter(confirmed_interview_slot=False,
-        interview_slot=None, withdrawn=False, job__ignore_by_bips=False).select_related(
+    applications_to_allocate = Application.objects.filter(
+        interview_slot=None, withdrawn=False).select_related(
         'applicant', 'job').prefetch_related('job__possible_interviewers_1',
         'job__possible_interviewers_2', 'job__possible_interviewers_3')
     for application in applications_to_allocate:
