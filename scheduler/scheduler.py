@@ -4,7 +4,7 @@
 import random
 import datetime
 
-from models import Application, InterviewSlot, BusyTime
+from .models import Application, InterviewSlot, BusyTime
 
 TRAVEL_TIME = datetime.timedelta(minutes=30) # represents travel time between rooms
 
@@ -36,7 +36,7 @@ class Interview:
         print("Room: ", self.interview_slot.room)
 
 class Scheduler:
-    def __init__(self, input_filename, seed=0):
+    def __init__(self, seed=0):
         assert_one_interview_slot_per_room_per_time()
         self.applicant_busy_times, self.interviewer_busy_time_space = get_busy_times()
         self.available_interview_slots = set(
@@ -203,16 +203,14 @@ class Scheduler:
         # Just to be sure, assert that the produced interview list is valid
         assert_interview_list_is_valid(self.interview_list)
 
-    def save_scheduled_interviews(self, output_filename):
+    def save_scheduled_interviews(self):
         for interview in self.interview_list:
             for interviewer in interview.interviewers:
                 interview.interview_slot.interviewers.add(interviewer)
             for application in self.applications[interview.applicant]:
                 application.interview_slot = interview.interview_slot
                 application.save()
-            # (set(), set()) is to create interview mails to be sent later
-            # Must save applications before interview_slots for mails to works!
-            interview.interview_slot.save(set(), set())
+            interview.interview_slot.save()
 
 
 def get_busy_times():
@@ -235,8 +233,8 @@ def get_busy_times():
 
 def get_applications():
     applied_jobs = {}
-    applications_to_allocate = Application.objects.filter(confirmed_interview_slot=False,
-        interview_slot=None, withdrawn=False, job__ignore_by_bips=False).select_related(
+    applications_to_allocate = Application.objects.filter(
+        interview_slot=None, withdrawn=False).select_related(
         'applicant', 'job').prefetch_related('job__possible_interviewers_1',
         'job__possible_interviewers_2', 'job__possible_interviewers_3')
     for application in applications_to_allocate:

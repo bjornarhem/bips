@@ -5,7 +5,7 @@
 
 from django.core import management
 
-from uno.app.applications.bips import Scheduler
+from scheduler.scheduler import Scheduler
 
 
 class Command(management.BaseCommand):

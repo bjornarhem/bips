@@ -1,18 +1,18 @@
 from datetime import datetime
 from django.test import TestCase
 
-from uno.app.applications.bips import Scheduler, Interview, get_applications, get_busy_times, assert_one_interview_slot_per_room_per_time, assert_interview_list_is_valid
-from uno.utils.tests.factory_f import ApplicantFactory, ApplicationFactory, BusyTimeFactory, InterviewSlotFactory, JobFactory, RoomFactory, UserFactory
+from .scheduler import Scheduler, Interview, get_applications, get_busy_times, assert_one_interview_slot_per_room_per_time, assert_interview_list_is_valid
+from .factory_f import ApplicantFactory, ApplicationFactory, BusyTimeFactory, InterviewSlotFactory, JobFactory, RoomFactory, InterviewerFactory
 
 # Tests for automatic interview scheduling
-# Run with python manage.py test uno/app/applications/ (in root folder)
+# Run with python manage.py test (in root folder)
 
 
 class BasicBipsTest(TestCase):
     def setUp(self):
         # Insert test stuff in the test database
-        self.interviewer1 = UserFactory()
-        self.interviewer2 = UserFactory()
+        self.interviewer1 = InterviewerFactory()
+        self.interviewer2 = InterviewerFactory()
         self.job1 = JobFactory()
         self.job1.possible_interviewers_1.add(self.interviewer1, self.interviewer2)
         self.applicant1 = ApplicantFactory()
@@ -24,14 +24,10 @@ class BasicBipsTest(TestCase):
 
     def test_get_applications(self):
         # Verify that the correct applications are returned
-        self.job2 = JobFactory(ignore_by_bips=True)
-        self.job3 = JobFactory()
-        self.application2 = ApplicationFactory(applicant=self.applicant1, job=self.job2)
-        self.application3 = ApplicationFactory(applicant=self.applicant1, job=self.job3,
+        self.job2 = JobFactory()
+        self.application2 = ApplicationFactory(applicant=self.applicant1, job=self.job2,
             withdrawn=True)
-        self.application4 = ApplicationFactory(applicant=self.applicant1, job=self.job3,
-            confirmed_interview_slot=True)
-        self.application5 = ApplicationFactory(applicant=self.applicant1, job=self.job3,
+        self.application3 = ApplicationFactory(applicant=self.applicant1, job=self.job2,
             interview_slot=self.interview_slot1)
         applications = {self.applicant1: [self.application1]}
         self.assertEqual(get_applications(), applications)
@@ -81,8 +77,8 @@ class BasicBipsTest(TestCase):
 class BipsCreateTest(TestCase):
     def setUp(self):
         # Insert test stuff in the test database
-        self.interviewer1 = UserFactory()
-        self.interviewer2 = UserFactory()
+        self.interviewer1 = InterviewerFactory()
+        self.interviewer2 = InterviewerFactory()
 
         self.job1 = JobFactory()
         self.job1.possible_interviewers_1.add(self.interviewer1, self.interviewer2)
@@ -138,8 +134,8 @@ class BipsCreateTest(TestCase):
 class BipsReschedulingTest(TestCase):
     def setUp(self):
         # Insert test stuff in the test database
-        self.interviewer1 = UserFactory()
-        self.interviewer2 = UserFactory()
+        self.interviewer1 = InterviewerFactory()
+        self.interviewer2 = InterviewerFactory()
         self.job1 = JobFactory()
         self.job1.possible_interviewers_1.add(self.interviewer1, self.interviewer2)
         self.applicant1 = ApplicantFactory()
@@ -185,8 +181,8 @@ class BipsDatabaseValidationTest(TestCase):
 
 class BipsInterviewListValidationTest(TestCase):
     def setUp(self):
-        self.interviewer1 = UserFactory()
-        self.interviewer2 = UserFactory()
+        self.interviewer1 = InterviewerFactory()
+        self.interviewer2 = InterviewerFactory()
         self.job1 = JobFactory()
         self.job1.possible_interviewers_1.add(self.interviewer1, self.interviewer2)
         self.applicant1 = ApplicantFactory()
@@ -211,8 +207,8 @@ class BipsInterviewListValidationTest(TestCase):
             assert_interview_list_is_valid(interview_list)
 
     def test_assert_priority_1_interviewers_when_required(self):
-        self.interviewer3 = UserFactory()
-        self.interviewer4 = UserFactory()
+        self.interviewer3 = InterviewerFactory()
+        self.interviewer4 = InterviewerFactory()
         self.job1.include_priority_1_interviewer = True
         self.job1.possible_interviewers_2.add(self.interviewer3, self.interviewer4)
         self.job1.save()
@@ -284,8 +280,8 @@ class BipsInterviewListValidationTest(TestCase):
 
 class BipsSimpleSchedulingScenariosTest(TestCase):
     def setUp(self):
-        self.interviewer1 = UserFactory()
-        self.interviewer2 = UserFactory()
+        self.interviewer1 = InterviewerFactory()
+        self.interviewer2 = InterviewerFactory()
         self.job1 = JobFactory()
         self.job1.possible_interviewers_1.add(self.interviewer1)
         self.job1.possible_interviewers_2.add(self.interviewer2)
@@ -371,8 +367,8 @@ class BipsSimpleSchedulingScenariosTest(TestCase):
         self.assertEqual(len(scheduler.interview_list), 1)
 
     def test_three_jobs(self):
-        self.interviewer3 = UserFactory()
-        self.interviewer4 = UserFactory()
+        self.interviewer3 = InterviewerFactory()
+        self.interviewer4 = InterviewerFactory()
         self.job2 = JobFactory()
         self.job3 = JobFactory()
         self.job2.possible_interviewers_1.add(self.interviewer3)
@@ -388,9 +384,9 @@ class BipsSimpleSchedulingScenariosTest(TestCase):
 
 class BipsSufficientBreaksTest(TestCase):
     def setUp(self):
-        self.interviewer1 = UserFactory()
-        self.interviewer2 = UserFactory()
-        self.interviewer3 = UserFactory()
+        self.interviewer1 = InterviewerFactory()
+        self.interviewer2 = InterviewerFactory()
+        self.interviewer3 = InterviewerFactory()
         self.job1 = JobFactory()
         self.job1.possible_interviewers_1.add(self.interviewer1)
         self.job1.possible_interviewers_2.add(self.interviewer2)

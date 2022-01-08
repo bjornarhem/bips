@@ -1,16 +1,7 @@
 from datetime import datetime
 import factory
 
-from uno.app.applications.models import Applicant, Application, InterviewSlot, BusyTime, Job, Room
-from uno.authentication.models import Group, User
-
-
-class GroupFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = Group
-
-    name = factory.Sequence(lambda n: f"Group {n}")
-    type = 3 # Gjeng
+from scheduler.models import Applicant, Application, Interviewer, InterviewSlot, BusyTime, Job, Room
 
 
 class JobFactory(factory.django.DjangoModelFactory):
@@ -18,16 +9,13 @@ class JobFactory(factory.django.DjangoModelFactory):
         model = Job
 
     title = factory.sequence(lambda n: f"Job {n}")
-    group = factory.SubFactory(GroupFactory)
 
 
 class ApplicantFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Applicant
 
-    email = factory.Sequence(lambda n: f"studentesen{n}@stud.ntnu.no")
-    phone = factory.Sequence(lambda n: 40000000 + n)
-    school = 10 # Gløs
+    name = factory.Sequence(lambda n: f"Applicant {n}")
 
 
 class ApplicationFactory(factory.django.DjangoModelFactory):
@@ -49,6 +37,13 @@ class RoomFactory(factory.django.DjangoModelFactory):
     name = factory.Sequence(lambda n: f"Room {n}")
 
 
+class InterviewerFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Interviewer
+
+    name = factory.Sequence(lambda n: f"Interviewer {n}")
+
+
 class InterviewSlotFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = InterviewSlot
@@ -56,11 +51,3 @@ class InterviewSlotFactory(factory.django.DjangoModelFactory):
     start_time = datetime(2020, 1, 1, 10, 0)
     end_time = datetime(2020, 1, 1, 10, 30)
     room = factory.SubFactory(RoomFactory)
-
-
-class UserFactory(factory.django.DjangoModelFactory): # Interviewers are users.
-    class Meta:
-        model = User
-
-    username = factory.Sequence(lambda n: f"funkesen{n}")
-    email = factory.Sequence(lambda n: f"funkesen{n}@samfundet.no")
