@@ -8,8 +8,8 @@ Clone the repo, and in the root repo, run:
 
 ```
 python3 -m venv venv
-pip3 install -r requirements.txt
 source venv/bin/active
+pip3 install -r requirements.txt
 python3 manage.py migrate
 ```
 
