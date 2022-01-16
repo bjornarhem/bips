@@ -17,13 +17,13 @@ python3 manage.py migrate
 
 To insert interview data you can use the built in Django admin web interface, by first creating a user with
 
-`DJANGO_SUPERUSER_PASSWORD=admin python3 manage.py createsuperuser --no-input --username admin2 --email null@gmail.com`,
+`DJANGO_SUPERUSER_PASSWORD=admin python3 manage.py createsuperuser --no-input --username admin --email null@gmail.com`,
 
 and then running the web app locally with
 
 `python3 manage.py runserver`.
 
-Now you can go to `localhost:8000`, log in with admin/admin, and editing the interview data as you like.
+Now you can go to `localhost:8000/admin`, log in with admin/admin, and editing the interview data as you like.
 
 Alternatively, you can insert the data with the Django shell, by running `python3 manage.py shell`. Or, if you prefer SQL, you can use a CLI like `sqlite3` to edit the file `db.sqlite3`.
 
