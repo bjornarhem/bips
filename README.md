@@ -35,6 +35,12 @@ To run the interview scheduling script, run
 
 which will run the interview scheduling algorithm, and give the user the option to save the result to the database.
 
+### Export interviews to CSV
+
+After scheduling the interviews, you can choose to export them to a CSV file with
+
+`python3 manage.py export_csv`.
+
 ## Contact
 
 For questions, suggestions, bug reports or general feedback, feel free to contact me at bjornarhem@gmail.com.
