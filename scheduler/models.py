@@ -12,6 +12,8 @@ class Room(models.Model):
 
 class Applicant(models.Model):
     name = models.CharField(verbose_name="Name", max_length=255)
+    email = models.CharField(verbose_name="Email address", max_length=255, blank=True)
+    phone = models.CharField(verbose_name="Phone number", max_length=255, blank=True)
 
     def __str__(self):
         return self.name
