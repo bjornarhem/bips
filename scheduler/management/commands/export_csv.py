@@ -5,23 +5,38 @@
 
 import csv
 from django.core import management
-from scheduler.models import Application
+from scheduler.models import Application, InterviewSlot
 
 class Command(management.BaseCommand):
     help = "Export interviews to CSV"
 
     def handle(self, *args, **options):
-        applications_with_interview = Application.objects.exclude(interview_slot=None)
         with open('scheduled_interviews.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["Applicant name", "Applicant email", "Start time", "End time",
-                "Room", "Interviewer 1", "Interviewer 2", "Interviewer 3"])
-            for application in applications_with_interview:
-                applicant_name = application.applicant.name
-                applicant_email = application.applicant.email
-                start_time = application.interview_slot.start_time
-                end_time = application.interview_slot.end_time
-                room = application.interview_slot.room
-                interview_names = [i.name for i in application.interview_slot.interviewers.all()]
-                writer.writerow([applicant_name, applicant_email, start_time, end_time, room] + interview_names)
+                "Room", "Interviewers", "Applied jobs"])
+
+            applications = Application.objects.all().select_related("interview_slot", "applicant", "job")
+            interview_slots = {}
+            for application in applications:
+                interview_slots.setdefault(application.interview_slot, []).append(application)
+
+            for interview_slot in interview_slots:
+                related_applications = interview_slots[interview_slot]
+
+                # Assume only one applicant per interview
+                applicant_name = related_applications[0].applicant.name
+                applicant_email = related_applications[0].applicant.email
+
+                start_time = interview_slot.start_time
+                end_time = interview_slot.end_time
+                room = interview_slot.room
+
+                interviewer_names = ", ".join([i.name for i in interview_slot.interviewers.all()])
+
+                applied_jobs = ", ".join([app.job.title for app in related_applications])
+
+                writer.writerow(
+                    [applicant_name, applicant_email, start_time, end_time, room, interviewer_names, applied_jobs]
+                )
 
