@@ -291,7 +291,7 @@ def assert_one_interview_slot_per_room_per_time():
 # Functions for validating interview list correctness after scheduling interviews
 
 def assert_interview_list_is_valid(interview_list):
-    assert_correct_number_of_interviewers(interview_list)
+    assert_at_least_two_interviewers(interview_list)
     assert_applied_jobs_represented_in_interviews(interview_list)
     assert_priority_1_interviewers_when_required(interview_list)
     assert_applicants_available_at_time(interview_list)
@@ -301,9 +301,9 @@ def assert_interview_list_is_valid(interview_list):
     assert_at_most_one_interview_per_applicant(interview_list)
     assert_sufficient_travel_time_and_breaks_for_interviewers(interview_list)
 
-def assert_correct_number_of_interviewers(interview_list):
+def assert_at_least_two_interviewers(interview_list):
     for interview in interview_list:
-        assert len(interview.interviewers) in {2, 3}
+        assert len(interview.interviewers) >= 2
 
 def assert_applied_jobs_represented_in_interviews(interview_list):
     applications = get_applications()
