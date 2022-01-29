@@ -16,7 +16,7 @@ class Command(management.BaseCommand):
             writer.writerow(["Applicant name", "Applicant email", "Start time", "End time",
                 "Room", "Interviewers", "Applied jobs"])
 
-            applications = Application.objects.all().select_related("interview_slot", "applicant", "job")
+            applications = Application.objects.exclude(interview_slot=None).select_related("interview_slot", "applicant", "job")
             interview_slots = {}
             for application in applications:
                 interview_slots.setdefault(application.interview_slot, []).append(application)
